@@ -6,7 +6,7 @@ namespace LivinParisApp
 {
     public partial class Form1 : Form
     {
-        // Déclarez les variables comme membres de la classe
+        // Dï¿½clarez les variables comme membres de la classe
         private MetroDataService metroData;
         private List<Station> stations;
         private List<Lien> connexions;
@@ -35,21 +35,21 @@ namespace LivinParisApp
         {
             InitializeComponent();
 
-            // Créez une instance de MetroDataService
+            // Crï¿½ez une instance de MetroDataService
             metroData = new MetroDataService();
 
-            // Accédez aux propriétés via l'instance metroData
+            // Accï¿½dez aux propriï¿½tï¿½s via l'instance metroData
             stations = metroData.Stations;  // Au lieu de MetroDataService.Stations
             connexions = metroData.Connexions;  // Au lieu de MetroDataService.Connexions
             connexionsOriginales = new List<Lien>(connexions); // Sauvegardez les connexions originales
-                                                               // Créez une instance de Graphe
+                                                               // Crï¿½ez une instance de Graphe
             graphe = new Graphe(connexions);
 
-            // Abonnez-vous à l'événement Paint
+            // Abonnez-vous ï¿½ l'ï¿½vï¿½nement Paint
             this.Paint += new PaintEventHandler(Form1_Paint);
             this.MouseClick += new MouseEventHandler(Form1_MouseClick);
 
-            // Ajoutez les contrôles
+            // Ajoutez les contrï¿½les
             btnAfficherStations = new Button { Text = "Afficher les Stations", Location = new Point(10, 10), Width = 150 };
             btnAfficherLiens = new Button { Text = "Afficher les Liens", Location = new Point(10, 50), Width = 150 };
             btnAfficherTemps = new Button { Text = "Afficher les Temps", Location = new Point(10, 130), Width = 150 };
@@ -84,6 +84,9 @@ namespace LivinParisApp
             this.Controls.Add(txtRechercheStation);
             this.Controls.Add(lstStations);
 
+            //plein Ã©cran
+            this.WindowState = FormWindowState.Maximized;
+
             // Pre-fill the search bar
             txtRechercheStation.Text = "Rechercher une station";
         }
@@ -112,25 +115,25 @@ namespace LivinParisApp
         }
 
         /// <summary>
-        /// Permet de sélectionner une station ou un lien en cliquant dessus.
+        /// Permet de sï¿½lectionner une station ou un lien en cliquant dessus.
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
         private void Form1_MouseClick(object sender, MouseEventArgs e)
         {
-            // Vérifiez si un lien a été cliqué
+            // Vï¿½rifiez si un lien a ï¿½tï¿½ cliquï¿½
             foreach (var lien in connexions)
             {
                 if (LienClique(lien, e.Location))
                 {
                     lienSelectionne = lien;
                     stationSelectionnee = null;
-                    //this.Invalidate(); // Redessiner le formulaire pour mettre à jour la sélection
+                    //this.Invalidate(); // Redessiner le formulaire pour mettre ï¿½ jour la sï¿½lection
                     return;
                 }
             }
 
-            // Vérifiez si une station a été cliquée
+            // Vï¿½rifiez si une station a ï¿½tï¿½ cliquï¿½e
             foreach (var station in stations)
             {
                 var rect = new Rectangle(station.Position.X - rayon, station.Position.Y - rayon, 2 * rayon, 2 * rayon);
@@ -153,14 +156,14 @@ namespace LivinParisApp
 
                     stationSelectionnee = station;
                     lienSelectionne = null;
-                    this.Invalidate(); // Redessiner le formulaire pour mettre à jour la couleur de la station sélectionnée
+                    this.Invalidate(); // Redessiner le formulaire pour mettre ï¿½ jour la couleur de la station sï¿½lectionnï¿½e
                     break;
                 }
             }
         }
 
         /// <summary>
-        /// Vérifie si un lien a été cliqué.
+        /// Vï¿½rifie si un lien a ï¿½tï¿½ cliquï¿½.
         /// </summary>
         /// <param name="lien"></param>
         /// <param name="point"></param>
@@ -171,7 +174,7 @@ namespace LivinParisApp
             var p1 = AjusterPoint(lien.Depart.Position, lien.Arrivee.Position, rayon);
             var p2 = AjusterPoint(lien.Arrivee.Position, lien.Depart.Position, rayon);
             var distance = DistancePointALigne(p1, p2, point);
-            return distance < 5; // Ajustez cette valeur pour la sensibilité du clic
+            return distance < 5; // Ajustez cette valeur pour la sensibilitï¿½ du clic
         }
 
         private Point AjusterPoint(Point p1, Point p2, int rayon)
@@ -222,7 +225,7 @@ namespace LivinParisApp
         }
 
         /// <summary>
-        /// Affiche la liste des stations dans une boîte de dialogue.
+        /// Affiche la liste des stations dans une boï¿½te de dialogue.
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -232,7 +235,7 @@ namespace LivinParisApp
         }
 
         /// <summary>
-        /// Affiche la liste des connexions dans une boîte de dialogue.
+        /// Affiche la liste des connexions dans une boï¿½te de dialogue.
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -242,7 +245,7 @@ namespace LivinParisApp
         }
 
         /// <summary>
-        /// Recherche le chemin le plus court entre la station de départ et la station d'arrivée.
+        /// Recherche le chemin le plus court entre la station de dï¿½part et la station d'arrivï¿½e.
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -252,10 +255,10 @@ namespace LivinParisApp
             {
                 var (path, totalTime) = graphe.GetShortestPath(stationDepart, stationArrivee);
 
-                // Afficher le résultat ici
+                // Afficher le rï¿½sultat ici
                 StringBuilder sb = new StringBuilder();
                 sb.AppendLine($"Temps de trajet total : {totalTime} minutes");
-                sb.AppendLine("Stations empruntées :");
+                sb.AppendLine("Stations empruntï¿½es :");
                 sb.AppendLine(string.Join(" --> ", path.Select(s => s.Nom)));
                 MessageBox.Show(sb.ToString(), "Chemin le plus court");
 
@@ -263,7 +266,7 @@ namespace LivinParisApp
             }
             else
             {
-                MessageBox.Show("Veuillez sélectionner une station de départ et une station d'arrivée.");
+                MessageBox.Show("Veuillez sï¿½lectionner une station de dï¿½part et une station d'arrivï¿½e.");
             }
         }
 
@@ -279,7 +282,7 @@ namespace LivinParisApp
         }
 
         /// <summary>
-        /// Recherche le chemin le plus court entre la station de départ et la station d'arrivée en utilisant l'algorithme Bellman-Ford.
+        /// Recherche le chemin le plus court entre la station de dï¿½part et la station d'arrivï¿½e en utilisant l'algorithme Bellman-Ford.
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -293,7 +296,7 @@ namespace LivinParisApp
 
                     StringBuilder sb = new StringBuilder();
                     sb.AppendLine($"Temps de trajet total : {totalTime} minutes");
-                    sb.AppendLine("Stations empruntées :");
+                    sb.AppendLine("Stations empruntï¿½es :");
                     sb.AppendLine(string.Join(" --> ", path.Select(s => s.Nom)));
                     MessageBox.Show(sb.ToString(), "Chemin Bellman-Ford");
 
@@ -308,7 +311,7 @@ namespace LivinParisApp
             }
             else
             {
-                MessageBox.Show("Veuillez sélectionner une station de départ et d'arrivée.");
+                MessageBox.Show("Veuillez sï¿½lectionner une station de dï¿½part et d'arrivï¿½e.");
             }
         }
 
@@ -326,7 +329,7 @@ namespace LivinParisApp
         }
 
         /// <summary>
-        /// Permet de sélectionner une station en double-cliquant dessus dans le menu déroulant.
+        /// Permet de sï¿½lectionner une station en double-cliquant dessus dans le menu dï¿½roulant.
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -349,14 +352,14 @@ namespace LivinParisApp
                 }
 
                 stationSelectionnee = station;
-                this.Invalidate(); // Redessiner le formulaire pour mettre à jour la couleur de la station sélectionnée
+                this.Invalidate(); // Redessiner le formulaire pour mettre ï¿½ jour la couleur de la station sï¿½lectionnï¿½e
             }
         }
 
         private void BtnHelp_Click(object sender, EventArgs e)
         {
             // Show a message box with instructions on how to interact with the graph
-            MessageBox.Show("Instructions:\n\n1. Recherchez ou sélectionnez directement les stations sur le graphe pour trouver le plus court chemin.\n2. Sélectionnez un lien et coupez-le pour trouver un chemin alternatif.\n3. Utilisez les boutons pour plus de renseignements.");
+            MessageBox.Show("Instructions:\n\n1. Recherchez ou sï¿½lectionnez directement les stations sur le graphe pour trouver le plus court chemin.\n2. Sï¿½lectionnez un lien et coupez-le pour trouver un chemin alternatif.\n3. Utilisez les boutons pour plus de renseignements.");
         }
 
         private void BtnCouper_Click(object sender, EventArgs e)
@@ -364,22 +367,22 @@ namespace LivinParisApp
             if (lienSelectionne != null)
             {
                 connexions.Remove(lienSelectionne);
-                graphe = new Graphe(connexions); // Recréez le graphe avec les connexions mises à jour
+                graphe = new Graphe(connexions); // Recrï¿½ez le graphe avec les connexions mises ï¿½ jour
                 lienSelectionne = null;
-                this.Invalidate(); // Redessiner le formulaire pour mettre à jour les connexions
+                this.Invalidate(); // Redessiner le formulaire pour mettre ï¿½ jour les connexions
             }
             else
             {
-                MessageBox.Show("Veuillez sélectionner un lien à couper.");
+                MessageBox.Show("Veuillez sï¿½lectionner un lien ï¿½ couper.");
             }
         }
 
         private void BtnReset_Click(object sender, EventArgs e)
         {
-            connexions = new List<Lien>(connexionsOriginales); // Réinitialisez les connexions
-            graphe = new Graphe(connexions); // Recréez le graphe avec les connexions réinitialisées
+            connexions = new List<Lien>(connexionsOriginales); // Rï¿½initialisez les connexions
+            graphe = new Graphe(connexions); // Recrï¿½ez le graphe avec les connexions rï¿½initialisï¿½es
             lienSelectionne = null;
-            this.Invalidate(); // Redessiner le formulaire pour mettre à jour les connexions
+            this.Invalidate(); // Redessiner le formulaire pour mettre ï¿½ jour les connexions
         }
     }
 }

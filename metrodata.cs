@@ -24,8 +24,6 @@ namespace liv_inParis
             Stations = LireStations();
             CalculerPositions(Stations);
             Connexions = LireLiens();
-            AfficherStations();
-            AfficherLiens();
         }
 
         /// <summary>

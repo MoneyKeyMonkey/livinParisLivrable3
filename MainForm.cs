@@ -9,7 +9,7 @@ namespace LivinParisApp
     {
         private MySqlConnection connection;
 
-       public MainForm()
+public MainForm()
 {
     // Configuration de la fenêtre principale
     this.Text = "LivinParis";
