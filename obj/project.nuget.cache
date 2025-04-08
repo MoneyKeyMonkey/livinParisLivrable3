@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "z62np4f6KLI=",
+  "dgSpecHash": "S7qoQujTAs8=",
   "success": true,
-  "projectFilePath": "C:\\Users\\cavai\\source\\repos\\final\\Projecto\\LIVRABLE2\\WinFormsApp1\\WinFormsApp1.csproj",
+  "projectFilePath": "C:\\Users\\cavai\\OneDrive\\Documents\\GitHub\\livinParisLivrable3\\WinFormsApp1.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\cavai\\.nuget\\packages\\bouncycastle.cryptography\\2.3.1\\bouncycastle.cryptography.2.3.1.nupkg.sha512",
     "C:\\Users\\cavai\\.nuget\\packages\\google.protobuf\\3.26.1\\google.protobuf.3.26.1.nupkg.sha512",
