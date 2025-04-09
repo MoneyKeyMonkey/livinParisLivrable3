@@ -131,7 +131,7 @@ namespace LivinParisApp
                 bool elementSupprime = false;
 
                 // Vérifier d'abord les stations
-                foreach (var station in stations.ToList()) // Utiliser ToList() pour éviter des erreurs de modification pendant l'énumération
+                foreach (var station in stations.ToList())
                 {
                     int hitboxRayon = (int)(rayon * 1.5);
                     var rect = new Rectangle(station.Position.X - hitboxRayon, station.Position.Y - hitboxRayon,
@@ -160,28 +160,37 @@ namespace LivinParisApp
                 // Si aucune station n'a été supprimée, vérifier les liens
                 if (!elementSupprime)
                 {
-                    foreach (var lien in connexions.ToList()) // Utiliser ToList() ici aussi
+                    foreach (var lien in connexions.ToList())
                     {
                         if (LienClique(lien, e.Location))
                         {
+                            // Supprimer le lien cliqué
                             connexions.Remove(lien);
-
-                            if (lienSelectionne == lien) lienSelectionne = null;
-
-                            MessageBox.Show($"Lien entre {lien.Depart.Nom} et {lien.Arrivee.Nom} supprimé.",
-                                "Suppression effectuée", MessageBoxButtons.OK, MessageBoxIcon.Information);
-
+                            
+                            // Trouver et supprimer également le lien inverse (si existant)
+                            var lienInverse = connexions.FirstOrDefault(l => 
+                                l.Depart == lien.Arrivee && l.Arrivee == lien.Depart);
+                            
+                            if (lienInverse != null)
+                            {
+                                connexions.Remove(lienInverse);
+                            }
+                            
+                            // Mettre à jour les références
+                            if (lienSelectionne == lien || lienSelectionne == lienInverse) 
+                                lienSelectionne = null;
+                            
                             elementSupprime = true;
                             break;
                         }
                     }
                 }
 
-                // Si un élément a été supprimé, mettre à jour le graphe
+                // Si un élément a été supprimé, mettre à jour le graphe UNE SEULE FOIS
                 if (elementSupprime)
                 {
                     graphe = new Graphe(connexions);
-                    this.Invalidate();
+                    this.Refresh(); // Force un rafraîchissement immédiat
                 }
             }
             else
