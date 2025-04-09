@@ -9,6 +9,21 @@ namespace liv_inParis
     {
         public List<Lien> Liens { get; }
         public bool AfficherTemps { get; set; } = false;
+        public bool ModeColoration { get; set; } = false;
+        private Dictionary<Station, int> colorationStations;
+        private static readonly Color[] CouleursColoration = new Color[]
+        {
+            Color.Yellow,
+            Color.LightBlue,
+            Color.LightGreen,
+            Color.Pink,
+            Color.Orange,
+            Color.Purple, 
+            Color.Turquoise,
+            Color.LightCoral,
+            Color.SandyBrown,
+            Color.Lavender
+        };
 
         int rayon = 10;
 
@@ -200,19 +215,30 @@ namespace liv_inParis
         }
 
         /// <summary>
-        /// Affiche les stations sur le graphe.
+        /// Affiche les stations sur le graphe avec leur coloration
         /// </summary>
-        /// <param name="g"></param>
-        /// <param name="stations"></param>
-        /// <param name="stationSelectionnee"></param>
-        
         public void AfficherStations(Graphics g, List<Station> stations, Station stationSelectionnee)
         {
             // Dessiner les stations et leurs noms
             foreach (var station in stations)
             {
                 if (station.Position == null) continue;  // Sécurité si position non définie
-                Color couleur = station == stationSelectionnee ? Color.Red : Color.White;
+                
+                Color couleur;
+                if (station == stationSelectionnee)
+                {
+                    couleur = Color.Red; // Toujours en rouge pour la station sélectionnée
+                }
+                else if (ModeColoration && colorationStations != null && colorationStations.TryGetValue(station, out int indice))
+                {
+                    // Utilisation de la coloration de graphe
+                    couleur = CouleursColoration[indice % CouleursColoration.Length];
+                }
+                else
+                {
+                    // Couleur par défaut
+                    couleur = Color.White;
+                }
 
                 // Dessiner le cercle principal
                 using (var brush = new SolidBrush(couleur))
@@ -234,12 +260,9 @@ namespace liv_inParis
 
                     // Afficher le nom de la station
                     g.DrawString(station.Nom, new Font("Arial", 10, FontStyle.Regular), Brushes.Black, station.Position.X + rayon + 2, station.Position.Y - rayon);
-
                 }
-
             }
         }
-
 
         private void DessinerArc(Graphics g, Lien lien)
         {
@@ -282,8 +305,6 @@ namespace liv_inParis
             );
         }
 
-
-
         /// <summary>
         /// Dessine une flèche à l'extrémité d'une ligne pour les arcs unidirectionnels.
         /// </summary>
@@ -311,7 +332,41 @@ namespace liv_inParis
             g.FillPolygon(pen.Brush, points);
         }
 
-
+        /// <summary>
+        /// Applique l'algorithme de coloration de graphe aux stations
+        /// </summary>
+        /// <returns>Dictionnaire associant chaque station à une couleur (numéro)</returns>
+        public Dictionary<Station, int> ColorerStations()
+        {
+            var coloration = new Dictionary<Station, int>();
+            var stations = Liens.SelectMany(l => new[] { l.Depart, l.Arrivee }).Distinct().ToList();
+            
+            // Trie les stations par nombre de voisins décroissant (heuristique)
+            stations = stations.OrderByDescending(s => 
+                Liens.Count(l => l.Depart == s || l.Arrivee == s)).ToList();
+            
+            foreach (var station in stations)
+            {
+                // Trouver les couleurs déjà utilisées par les voisins
+                var couleursVoisins = new HashSet<int>();
+                foreach (var lien in Liens.Where(l => l.Depart == station || l.Arrivee == station))
+                {
+                    var voisin = lien.Depart == station ? lien.Arrivee : lien.Depart;
+                    if (coloration.TryGetValue(voisin, out int couleur))
+                        couleursVoisins.Add(couleur);
+                }
+                
+                // Trouver la première couleur disponible
+                int couleurStation = 0;
+                while (couleursVoisins.Contains(couleurStation))
+                    couleurStation++;
+                    
+                coloration[station] = couleurStation;
+            }
+            
+            colorationStations = coloration;
+            return coloration;
+        }
 
         /// <summary>
         /// 
@@ -324,26 +379,40 @@ namespace liv_inParis
         {
             var distances = new Dictionary<Station, int>();
             var previous = new Dictionary<Station, Station>();
-            int nbrchangements = 0;
+            var ligneArrivee = new Dictionary<Station, string>(); // Ajout du tracking des lignes comme dans Dijkstra
 
             // Initialisation
             foreach (var station in Liens.SelectMany(l => new[] { l.Depart, l.Arrivee }).Distinct())
             {
                 distances[station] = int.MaxValue;
                 previous[station] = null;
+                ligneArrivee[station] = null;
             }
             distances[source] = 0;
-
+            
             // Relâchement des arêtes (V-1 itérations)
             for (int i = 0; i < distances.Count - 1; i++)
             {
                 foreach (var lien in Liens)
                 {
-                    if (distances[lien.Depart] != int.MaxValue &&
-                        distances[lien.Depart] + lien.Temps < distances[lien.Arrivee])
+                    if (distances[lien.Depart] != int.MaxValue)
                     {
-                        distances[lien.Arrivee] = distances[lien.Depart] + lien.Temps;
-                        previous[lien.Arrivee] = lien.Depart;
+                        int tempsSupplementaire = 0;
+                        
+                        // Ajout du temps de changement seulement si on change de ligne
+                        if (ligneArrivee[lien.Depart] != null && lien.Ligne != ligneArrivee[lien.Depart])
+                        {
+                            tempsSupplementaire = lien.Depart.TempsChangement;
+                        }
+                        
+                        int newDist = distances[lien.Depart] + lien.Temps + tempsSupplementaire;
+                        
+                        if (newDist < distances[lien.Arrivee])
+                        {
+                            distances[lien.Arrivee] = newDist;
+                            previous[lien.Arrivee] = lien.Depart;
+                            ligneArrivee[lien.Arrivee] = lien.Ligne;
+                        }
                     }
                 }
             }
@@ -357,10 +426,9 @@ namespace liv_inParis
                 current = previous[current];
             }
 
-            return (path, distances[target] + (nbrchangements * 5));
+            return (path, distances[target]); // Pas besoin d'ajouter nbrchangements car temps déjà inclus
         }
 
-        
         /// <summary>
         /// Dictionnaire des couleurs des lignes de métro.
         /// </summary>
