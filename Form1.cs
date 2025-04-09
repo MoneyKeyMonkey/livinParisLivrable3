@@ -1,5 +1,3 @@
-//emeline est n
-
 using liv_inParis;
 using System.Data;
 using System.Text;
@@ -149,7 +147,7 @@ namespace LivinParisApp
                             connexions.Remove(lien);
                         }
 
-                        // Nettoyer les références à cette stoutfation
+                        // Nettoyer les références à cette station
                         if (stationDepart == station) stationDepart = null;
                         if (stationArrivee == station) stationArrivee = null;
                         if (stationSelectionnee == station) stationSelectionnee = null;
