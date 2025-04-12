@@ -169,6 +169,63 @@ namespace liv_inParis
         }
 
         /// <summary>
+        /// Affiche un chemin sur le graphe avec une couleur spécifiée et un label explicatif
+        /// </summary>
+        /// <param name="g">Le contexte graphique</param>
+        /// <param name="chemin">Le chemin à afficher</param>
+        /// <param name="couleur">La couleur du tracé</param>
+        /// <param name="label">Le texte descriptif à afficher</param>
+        public void AfficherCheminAvecLabel(Graphics g, List<Station> chemin, Color couleur, string label)
+        {
+            if (chemin == null || chemin.Count < 2) return;
+
+            using (var pen = new Pen(couleur, 3))
+            {
+                // Créer un léger décalage aléatoire pour éviter que les chemins ne se superposent exactement
+                Random rnd = new Random(couleur.GetHashCode()); // Utilise la couleur comme seed pour avoir un décalage constant
+                int decalageX = rnd.Next(-5, 5);
+                int decalageY = rnd.Next(-5, 5);
+
+                // Tracer le chemin
+                for (int i = 0; i < chemin.Count - 1; i++)
+                {
+                    if (chemin[i].Position != null && chemin[i + 1].Position != null)
+                    {
+                        Point p1 = new Point(chemin[i].Position.X + decalageX, chemin[i].Position.Y + decalageY);
+                        Point p2 = new Point(chemin[i + 1].Position.X + decalageX, chemin[i + 1].Position.Y + decalageY);
+
+                        g.DrawLine(pen, p1, p2);
+
+                        // Dessiner une flèche pour montrer le sens du trajet
+                        if (i == chemin.Count - 2) // Uniquement sur le dernier segment
+                        {
+                            double angle = Math.Atan2(p2.Y - p1.Y, p2.X - p1.X);
+                            DessinerFleche(g, pen, p1, p2, 13);
+                        }
+                    }
+                }
+            }
+
+            // Dessiner le label explicatif
+            using (Font font = new Font("Arial", 10, FontStyle.Bold))
+            using (SolidBrush brush = new SolidBrush(couleur))
+            using (SolidBrush bgBrush = new SolidBrush(Color.FromArgb(200, Color.White))) // Fond semi-transparent
+            {
+                // Position du label (en haut à gauche du chemin + décalage selon la couleur)
+                Station premiere = chemin.First();
+                int posX = premiere.Position.X + 10;
+                int posY = premiere.Position.Y - 30;
+
+                // Tracer un fond blanc semi-transparent pour améliorer la lisibilité
+                SizeF textSize = g.MeasureString(label, font);
+                g.FillRectangle(bgBrush, posX - 2, posY - 2, textSize.Width + 4, textSize.Height + 4);
+
+                // Dessiner le texte
+                g.DrawString(label, font, brush, posX, posY);
+            }
+        }
+
+        /// <summary>
         /// Gere la messageBox qui affiche les liens
         /// </summary>
         public void AfficherLiens()
@@ -217,49 +274,93 @@ namespace liv_inParis
         /// <summary>
         /// Affiche les stations sur le graphe avec leur coloration
         /// </summary>
-        public void AfficherStations(Graphics g, List<Station> stations, Station stationSelectionnee)
+        public void AfficherStations(Graphics g, List<Station> stations, Station stationSelectionnee = null, bool afficherNoms = true)
         {
-            // Dessiner les stations et leurs noms
-            foreach (var station in stations)
+            if (stations == null) return;
+
+            using (var brush = new SolidBrush(Color.White))
+            using (var pen = new Pen(Color.Black, 2))
             {
-                if (station.Position == null) continue;  // Sécurité si position non définie
-                
-                Color couleur;
-                if (station == stationSelectionnee)
+                foreach (var station in stations)
                 {
-                    couleur = Color.Red; // Toujours en rouge pour la station sélectionnée
-                }
-                else if (ModeColoration && colorationStations != null && colorationStations.TryGetValue(station, out int indice))
-                {
-                    // Utilisation de la coloration de graphe
-                    couleur = CouleursColoration[indice % CouleursColoration.Length];
-                }
-                else
-                {
-                    // Couleur par défaut
-                    couleur = Color.White;
-                }
+                    if (station.Position == null) continue;
 
-                // Dessiner le cercle principal
-                using (var brush = new SolidBrush(couleur))
-                {
-                    g.FillEllipse(brush,
-                                 station.Position.X - rayon,
-                                 station.Position.Y - rayon,
-                                 2 * rayon,
-                                 2 * rayon);
+                    // Utiliser les couleurs de coloration si le mode est activé
+                    if (ModeColoration && colorationStations != null && colorationStations.ContainsKey(station))
+                    {
+                        int colorIndex = colorationStations[station] % CouleursColoration.Length;
+                        brush.Color = CouleursColoration[colorIndex];
+                    }
+                    else
+                    {
+                        brush.Color = Color.White;
+                    }
+
+                    // Dessiner la station
+                    int x = station.Position.X;
+                    int y = station.Position.Y;
+                    g.FillEllipse(brush, x - rayon, y - rayon, 2 * rayon, 2 * rayon);
+                    
+                    // Si la station est sélectionnée, utiliser une couleur différente pour le contour
+                    if (station == stationSelectionnee)
+                    {
+                        pen.Color = Color.Red;
+                        pen.Width = 3;
+                    }
+                    else
+                    {
+                        pen.Color = Color.Black;
+                        pen.Width = 2;
+                    }
+                    
+                    g.DrawEllipse(pen, x - rayon, y - rayon, 2 * rayon, 2 * rayon);
+                    
+                    // Ne pas dessiner les noms si afficherNoms est false
+                    // Cette partie est maintenant conditionnelle
+                    if (afficherNoms)
+                    {
+                        using (var font = new Font("Arial", 8))
+                        using (var textBrush = new SolidBrush(Color.Black))
+                        {
+                            var format = new StringFormat
+                            {
+                                Alignment = StringAlignment.Center,
+                                LineAlignment = StringAlignment.Center
+                            };
+                            g.DrawString(station.Nom, font, textBrush, x, y + rayon + 10, format);
+                        }
+                    }
                 }
+            }
+        }
 
-                using (var pen = new Pen(Color.Black, 2))
+        // Ajouter une nouvelle méthode pour afficher uniquement les noms des stations
+        public void AfficherNomsStations(Graphics g, List<Station> stations, Point panOffset, float zoomFactor)
+        {
+            if (stations == null) return;
+
+            using (var font = new Font("Arial", 8))
+            using (var textBrush = new SolidBrush(Color.Black))
+            {
+                var format = new StringFormat
                 {
-                    g.DrawEllipse(pen,
-                                 station.Position.X - rayon,
-                                 station.Position.Y - rayon,
-                                 2 * rayon,
-                                 2 * rayon);
+                    Alignment = StringAlignment.Center,
+                    LineAlignment = StringAlignment.Center
+                };
 
-                    // Afficher le nom de la station
-                    g.DrawString(station.Nom, new Font("Arial", 10, FontStyle.Regular), Brushes.Black, station.Position.X + rayon + 2, station.Position.Y - rayon);
+                foreach (var station in stations)
+                {
+                    if (station.Position == null) continue;
+
+                    // Calculer la position du nom en tenant compte du décalage et du zoom
+                    int x = (int)(station.Position.X * zoomFactor + panOffset.X);
+                    int y = (int)(station.Position.Y * zoomFactor + panOffset.Y);
+                    
+                    // Position légèrement décalée vers le bas par rapport à la station
+                    y += (int)(rayon * zoomFactor) + 10;
+
+                    // Afficher le nom de la station à l'échelle normale
+                    g.DrawString(station.Nom, font, textBrush, x, y, format);
                 }
             }
         }
@@ -430,6 +531,105 @@ namespace liv_inParis
         }
 
         /// <summary>
+        /// Implémente l'algorithme de Floyd-Warshall pour trouver les plus courts chemins entre toutes les paires de stations.
+        /// </summary>
+        /// <returns>Un tuple contenant la matrice des distances et la matrice des prédécesseurs</returns>// À ajouter dans votre classe Graphe
+        public (Dictionary<(Station, Station), int> distances, Dictionary<(Station, Station), Station> next, Dictionary<(Station, Station), string> ligneArrivee) FloydWarshallAvecChangements()
+{
+    var stations = Liens.SelectMany(l => new[] { l.Depart, l.Arrivee }).Distinct().ToList();
+    var distances = new Dictionary<(Station, Station), int>();
+    var next = new Dictionary<(Station, Station), Station>();
+    var ligneArrivee = new Dictionary<(Station, Station), string>();
+
+    // Initialisation
+    foreach (var s1 in stations)
+    {
+        foreach (var s2 in stations)
+        {
+            distances[(s1, s2)] = s1 == s2 ? 0 : int.MaxValue;
+            next[(s1, s2)] = null;
+            ligneArrivee[(s1, s2)] = null;
+        }
+    }
+
+    // Ajouter les distances pour les connexions existantes
+    foreach (var lien in Liens)
+    {
+        var tempsTotal = lien.Temps;
+        distances[(lien.Depart, lien.Arrivee)] = tempsTotal;
+        next[(lien.Depart, lien.Arrivee)] = lien.Arrivee;
+        ligneArrivee[(lien.Depart, lien.Arrivee)] = lien.Ligne;
+    }
+
+    // Algorithme de Floyd-Warshall avec prise en compte des changements de ligne
+    foreach (var k in stations)
+    {
+        foreach (var i in stations)
+        {
+            foreach (var j in stations)
+            {
+                if (distances[(i, k)] != int.MaxValue && distances[(k, j)] != int.MaxValue)
+                {
+                    // Ajout du temps de changement si nécessaire
+                    int tempsChangement = 0;
+                    if (ligneArrivee[(i, k)] != null && 
+                        ligneArrivee[(k, j)] != null && 
+                        ligneArrivee[(i, k)] != ligneArrivee[(k, j)])
+                    {
+                        tempsChangement = k.TempsChangement;
+                    }
+
+                    int newDist = distances[(i, k)] + distances[(k, j)] + tempsChangement;
+                    if (newDist < distances[(i, j)])
+                    {
+                        distances[(i, j)] = newDist;
+                        next[(i, j)] = next[(i, k)];
+                        ligneArrivee[(i, j)] = ligneArrivee[(i, k)];
+                    }
+                }
+            }
+        }
+    }
+
+    return (distances, next, ligneArrivee);
+}
+
+        /// <summary>
+        /// Implémente l'algorithme de Floyd-Warshall avec prise en compte des changements de ligne.
+        /// </summary>
+        /// <returns>Un tuple contenant la matrice des distances, la matrice des prédécesseurs et la matrice des lignes</returns>
+        /// /// <summary>
+        /// Récupère le plus court chemin entre deux stations à l'aide des matrices calculées par Floyd-Warshall
+        /// </summary>
+        /// <param name="source">Station de départ</param>
+        /// <param name="target">Station d'arrivée</param>
+        /// <param name="distances">Matrice des distances</param>
+        /// <param name="next">Matrice des prédécesseurs</param>
+        /// <returns>Un tuple contenant le chemin et le temps total</returns>
+        public (List<Station> path, int totalTime) GetShortestPathFloydWarshall(
+            Station source, Station target, 
+            Dictionary<(Station, Station), int> distances, 
+            Dictionary<(Station, Station), Station> next)
+        {
+            if (next[(source, target)] == null)
+            {
+                throw new InvalidOperationException("Il n'existe pas de chemin entre ces deux stations.");
+            }
+
+            var path = new List<Station>();
+            path.Add(source);
+
+            var current = source;
+            while (current != target)
+            {
+                current = next[(current, target)];
+                path.Add(current);
+            }
+
+            return (path, distances[(source, target)]);
+        }
+
+        /// <summary>
         /// Dictionnaire des couleurs des lignes de métro.
         /// </summary>
         Dictionary<string, Color> couleursLignes = new Dictionary<string, Color>
@@ -452,5 +652,140 @@ namespace liv_inParis
                 { "13", Color.FromArgb(255, 0, 176, 217) },    // Bleu clair (Pantone 311C)
                 { "14", Color.FromArgb(255, 99, 52, 142) }
             };
+
+        /// <summary>
+        /// Recherche le chemin le plus confortable entre deux stations en minimisant les changements de ligne
+        /// </summary>
+        public (List<Station> path, int totalTime, int changements) GetComfortablePath(Station start, Station end)
+        {
+            if (start == null || end == null)
+                throw new ArgumentNullException("Les stations de départ et d'arrivée doivent être spécifiées.");
+
+            // Poids important pour les changements de ligne (équivalent à plusieurs minutes de trajet)
+            const int PENALITE_CHANGEMENT_LIGNE = 8;
+
+            // Dictionnaires pour stocker les informations de chemin
+            var distances = new Dictionary<Station, int>();
+            var ligneArrivee = new Dictionary<Station, string>();
+            var predecesseurs = new Dictionary<Station, Station>();
+            var nonVisitees = new HashSet<Station>();
+
+            // Initialisation
+            foreach (var lien in Liens)
+            {
+                if (!distances.ContainsKey(lien.Depart))
+                {
+                    distances[lien.Depart] = lien.Depart == start ? 0 : int.MaxValue;
+                    nonVisitees.Add(lien.Depart);
+                }
+                if (!distances.ContainsKey(lien.Arrivee))
+                {
+                    distances[lien.Arrivee] = lien.Arrivee == start ? 0 : int.MaxValue;
+                    nonVisitees.Add(lien.Arrivee);
+                }
+            }
+
+            // Algorithme de Dijkstra modifié
+            while (nonVisitees.Count > 0)
+            {
+                // Trouver la station non visitée avec la distance minimale
+                Station courant = null;
+                int minDistance = int.MaxValue;
+                foreach (var station in nonVisitees)
+                {
+                    if (distances[station] < minDistance)
+                    {
+                        minDistance = distances[station];
+                        courant = station;
+                    }
+                }
+
+                if (courant == null || courant == end || distances[courant] == int.MaxValue)
+                    break;
+
+                nonVisitees.Remove(courant);
+
+                // Explorer les voisins
+                foreach (var lien in Liens.Where(l => l.Depart == courant))
+                {
+                    // Calculer la pénalité pour changement de ligne
+                    int coutChangementLigne = 0;
+                    if (ligneArrivee.ContainsKey(courant) && 
+                        ligneArrivee[courant] != null && 
+                        ligneArrivee[courant] != lien.Ligne)
+                    {
+                        coutChangementLigne = PENALITE_CHANGEMENT_LIGNE;
+                        // Augmenter davantage la pénalité si la station n'est pas un point de correspondance officiel
+                        if (courant.TempsChangement <= 0)
+                            coutChangementLigne *= 2;
+                    }
+
+                    // Nouvelle distance avec pénalité
+                    int newDist = distances[courant] + lien.Temps + coutChangementLigne;
+
+                    // Mettre à jour si meilleur chemin
+                    if (newDist < distances.GetValueOrDefault(lien.Arrivee, int.MaxValue))
+                    {
+                        distances[lien.Arrivee] = newDist;
+                        predecesseurs[lien.Arrivee] = courant;
+                        ligneArrivee[lien.Arrivee] = lien.Ligne;
+                    }
+                }
+            }
+
+            // Reconstruire le chemin
+            var path = new List<Station>();
+            int changements = 0;
+            string lignePrecedente = null;
+            
+            if (predecesseurs.ContainsKey(end))
+            {
+                var courant = end;
+                while (courant != null)
+                {
+                    path.Insert(0, courant);
+                    
+                    // Compter les changements de ligne
+                    if (predecesseurs.ContainsKey(courant) && lignePrecedente != null && 
+                        ligneArrivee.ContainsKey(predecesseurs[courant]) && 
+                        ligneArrivee[predecesseurs[courant]] != lignePrecedente)
+                    {
+                        changements++;
+                    }
+                    
+                    lignePrecedente = ligneArrivee.GetValueOrDefault(courant);
+                    predecesseurs.TryGetValue(courant, out courant);
+                }
+            }
+            else
+            {
+                throw new InvalidOperationException("Aucun chemin n'a été trouvé entre ces deux stations.");
+            }
+
+            // Calculer le temps total réel (avec les temps de changement inclus)
+            int totalTime = 0;
+            changements = 0;
+            lignePrecedente = null;
+            
+            for (int i = 0; i < path.Count - 1; i++)
+            {
+                var lien = Liens.FirstOrDefault(l => l.Depart == path[i] && l.Arrivee == path[i + 1]);
+                if (lien != null)
+                {
+                    totalTime += lien.Temps;
+                    
+                    // Ajouter le temps de changement si nécessaire
+                    if (lignePrecedente != null && lignePrecedente != lien.Ligne)
+                    {
+                        changements++;
+                        totalTime += path[i].TempsChangement > 0 ? path[i].TempsChangement : 2; // Par défaut 2 minutes si non spécifié
+                    }
+                    
+                    lignePrecedente = lien.Ligne;
+                }
+            }
+
+            return (path, totalTime, changements);
+        }
     }
 }
